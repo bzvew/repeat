@@ -1,4 +1,16 @@
-def buildDict(filename,threshhold1,threshhold2):
+#!/usr/bin/python
+
+import sys
+
+
+filename = sys.argv[1]
+threshhold1 = int(sys.argv[2]) #length threshhold
+threshhold2 = int(sys.argv[3]) #from threshhold
+outputname = sys.argv[4]
+
+def buildDict(filename,threshhold1,threshhold2,outputname):
+
+
     readDict= {}
     repeatDict= {}
 
@@ -115,7 +127,7 @@ def buildDict(filename,threshhold1,threshhold2):
                     repeatDict[repeatid1]['depth'] += depth
                 else:
                     repeatDict[repeatid1]['depth'] += 1
-        f1 = open('result','w')
+        f1 = open(outputname,'w')
         for key in repeatDict:
             cur =repeatDict[key]
             if not cur['pointer']:
@@ -125,12 +137,12 @@ def buildDict(filename,threshhold1,threshhold2):
                     readto = cur['read'][2]
                     readlength = int(readto) - int(readfrom)
                     readstrand = cur['read'][3]
-                    f1.write('read' + readid + '_0' + ':' + readfrom + '-' + readto + ' ' + str(readlength) + '\n')
+                    f1.write('read' + readid + '_0' + ' ' + readfrom + ' ' + readto + '\n')
 
         return
 
-buildDict('test_all',100,100)
-
+buildDict(filename,threshhold1,threshhold2, outputname)
+sys.exit()
 
 
 
