@@ -4,11 +4,13 @@ import sys
 
 
 filename = sys.argv[1]
-threshhold1 = int(sys.argv[2]) #length threshhold
-threshhold2 = int(sys.argv[3]) #from threshhold
-outputname = sys.argv[4]
+threshold1 = int(sys.argv[2]) #length threshold
+threshold2 = int(sys.argv[3]) #from threshold
+threshold3 = int(sys.argv[4]) #length difference threshold
+threshold4 = int(sys.argv[5]) #depth  threshold
+outputname = sys.argv[5]
 
-def buildDict(filename,threshhold1,threshhold2,outputname):
+def buildDict(filename,threshold1,threshold2,threshold3,threshold4,outputname):
 
 
     readDict= {}
@@ -41,16 +43,24 @@ def buildDict(filename,threshhold1,threshhold2,outputname):
                 cur1[readid1] = {}
             cur1 = cur1[readid1]
 
-            lengthrange = int(id1replength) // threshhold1 * threshhold1
-            if lengthrange not in cur1:
-                cur1[lengthrange] = {}
-            cur1 = cur1[lengthrange]
+            lengthrange1 = int(id1replength) // threshold1 * threshold1
+            lengthrange2 = int(id2replength) // threshold1 * threshold1
+
+            if abs(lengthrange1 - lengthrange2) > threshold3:
+                pass
+
+
+            if lengthrange1 not in cur1:
+                cur1[lengthrange1] = {}
+            cur1 = cur1[lengthrange1]
+
+
 
             if id1strand not in cur1:
                 cur1[id1strand] = {}
             cur1 = cur1[id1strand]
 
-            fromrange = int(id1from) // threshhold2 * threshhold2
+            fromrange = int(id1from) // threshold2 * threshold2
             if fromrange not in cur1:
                 cur1[fromrange] = {}
             else:
@@ -64,22 +74,27 @@ def buildDict(filename,threshhold1,threshhold2,outputname):
                 cur2[readid2] = {}
             cur2 = cur2[readid2]
 
-            lengthrange = int(id2replength) // threshhold1 * threshhold1
-            if lengthrange not in cur2:
-                cur2[lengthrange] = {}
-            cur2 = cur2[lengthrange]
+            if lengthrange2 not in cur2:
+                cur2[lengthrange2] = {}
+            cur2 = cur2[lengthrange2]
 
             if id2strand not in cur2:
                 cur2[id2strand] = {}
             cur2 = cur2[id2strand]
 
-            fromrange = int(id2from) // threshhold2 * threshhold2
+            fromrange = int(id2from) // threshold2 * threshold2
             if fromrange not in cur2:
                 cur2[fromrange] = {}
             else:
                 addreadtwo = False
 
             cur2 = cur2[fromrange]
+
+            readid = readid1 if lengthrange1 > lengthrange2 else readid2
+            idfrom = id1from if lengthrange1 > lengthrange2 else id2from
+            idto = id1to if lengthrange1 > lengthrange2 else id2to
+            idstrand = id1strand if lengthrange1 > lengthrange2 else id2strand
+            idrange = lengthrange1 if lengthrange1 > lengthrange2 else lengthrange2
 
             if addreadone and addreadtwo:
                 cur3 = repeatDict
@@ -91,7 +106,7 @@ def buildDict(filename,threshhold1,threshhold2,outputname):
                 cur3 = cur3[repeatidcount]
                 cur3['depth'] = 1
                 cur3['pointer'] = None
-                cur3['read'] = [readid1,id1from,id1to,id1strand]
+                cur3['read'] = [readid, idfrom, idto, idrange, idstrand]
 
             elif addreadone and not addreadtwo:
                 repeatid = cur2['repeatid']
@@ -101,6 +116,8 @@ def buildDict(filename,threshhold1,threshhold2,outputname):
 
                 cur1['repeatid'] = repeatid
                 repeatDict[repeatid]['depth'] += 1
+                if repeatDict[repeatid]['read'][3] < idrange:
+                    repeatDict[repeatid]['read'] = [readid, idfrom, idto, idrange, idstrand]
 
             elif not addreadone and addreadtwo:
                 repeatid = cur1['repeatid']
@@ -110,6 +127,9 @@ def buildDict(filename,threshhold1,threshhold2,outputname):
 
                 cur2['repeatid'] = repeatid
                 repeatDict[repeatid]['depth'] += 1
+                if repeatDict[repeatid]['read'][3] < idrange:
+                    repeatDict[repeatid]['read'] = [readid, idfrom, idto, idrange, idstrand]
+
 
             else:
                 repeatid1 = cur1['repeatid']
@@ -127,21 +147,26 @@ def buildDict(filename,threshhold1,threshhold2,outputname):
                     repeatDict[repeatid1]['depth'] += depth
                 else:
                     repeatDict[repeatid1]['depth'] += 1
+
+                if repeatDict[repeatid1]['read'][3] < idrange:
+                    repeatDict[repeatid1]['read'] = [readid, idfrom, idto, idrange, idstrand]
+
         f1 = open(outputname,'w')
         for key in repeatDict:
             cur =repeatDict[key]
             if not cur['pointer']:
-                if cur['depth'] > 10:
+                if cur['depth'] > threshold4:
                     readid = cur['read'][0]
                     readfrom = cur['read'][1]
                     readto = cur['read'][2]
-                    readlength = int(readto) - int(readfrom)
-                    readstrand = cur['read'][3]
-                    f1.write('read' + readid + '_0' + ' ' + readfrom + ' ' + readto + '\n')
+                    readlength = cur['read'][3]
+                    readstrand = cur['read'][4]
+                    f1.write('read' + readid + '_0' + ' ' + readfrom + ' ' +
+                             readto + ' ' + str(readlength) + ' ' + readstrand + '\n')
 
         return
 
-buildDict(filename,threshhold1,threshhold2, outputname)
+#buildDict('test_all',200,100,100,100,'result1')
 sys.exit()
 
 
